@@ -1,0 +1,89 @@
+@startuml Cryptocurrency Exchange Platform
+
+' Styling
+skinparam class {
+    BackgroundColor White
+    ArrowColor #2688d4
+    BorderColor #2688d4
+}
+
+' Entities
+entity "User" as user {
+    *id : UUID <<PK>>
+    --
+    *username : String <<Unique>>
+    *email : String <<Unique>>
+    *password : String <<Hashed>>
+    *status : ENUM
+    --
+    status: {active, suspended}
+}
+
+entity "Wallet" as wallet {
+    *id : UUID <<PK>>
+    --
+    *userId : UUID <<FK>>
+    *currency : ENUM
+    *balance : DECIMAL
+    address : String <<Optional>>
+    --
+    currency: {BTC, ETH, XRP, DOGE, THB, USD}
+}
+
+entity "Transaction" as transaction {
+    *id : UUID <<PK>>
+    --
+    *fromWalletId : UUID <<FK>>
+    *toWalletId : UUID <<FK>>
+    *amount : DECIMAL
+    *currency : ENUM
+    *type : ENUM
+    *status : ENUM
+    externalAddress : String <<Optional>>
+    --
+    currency: {BTC, ETH, XRP, DOGE, THB, USD}
+    type: {internal, external, exchange}
+    status: {pending, completed, failed}
+}
+
+entity "Order" as order {
+    *id : UUID <<PK>>
+    --
+    *userId : UUID <<FK>>
+    *type : ENUM
+    *baseCurrency : ENUM
+    *quoteCurrency : ENUM
+    *amount : DECIMAL
+    *price : DECIMAL
+    *status : ENUM
+    *filledAmount : DECIMAL
+    --
+    type: {buy, sell}
+    baseCurrency: {BTC, ETH, XRP, DOGE}
+    quoteCurrency: {THB, USD}
+    status: {open, filled, cancelled}
+}
+
+' Relationships
+user "1" -- "N" wallet : has >
+user "1" -- "N" order : creates >
+wallet "1" -- "N" transaction : is source of >
+wallet "1" -- "N" transaction : is destination of >
+
+note bottom of wallet
+    Constraints:
+    1. Each user must have wallets for all currencies
+    2. Balance must not be negative
+end note
+
+note bottom of transaction
+    Constraints:
+    1. Must verify sufficient balance before transaction
+end note
+
+note bottom of order
+    Constraints:
+    1. Must verify sufficient balance before order
+end note
+
+@enduml
